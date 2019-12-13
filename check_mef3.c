@@ -350,7 +350,7 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
             if ( abs(block_size - rps->block_header->block_bytes) > 0 )
             {
                 num_errors++;
-                sprintf(message, "Block %d size %u disagrees with index array offset %u\, in segment %s\n", i,
+                sprintf(message, "Block %d size %u disagrees with index array offset %u, in segment %s\n", i,
                         rps->block_header->block_bytes, block_size, channel->segments[start_segment].name);
                 fprintf(stdout, "%s", message);
                 if (logfile) fprintf(lfp, "%s", message);
