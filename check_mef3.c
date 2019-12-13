@@ -469,6 +469,7 @@ int main (int argc, const char * argv[]) {
     }
     
     // look for password
+    i = 1;
     while (i < argc)
     {
         if (*argv[i] == '-') {
