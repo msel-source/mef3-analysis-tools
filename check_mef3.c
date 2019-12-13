@@ -3,7 +3,7 @@
  *  check_mef3.c
  *
  
- Program to validate a MEF 3 channel.  It looks for inconsistencies in MEF 3 channels.
+ Program to validate a MEF 3 channel.  It looks for inconsistencies within MEF 3 channels.
  
  This program is an update of the previous (MEF version 2) checker.
  
