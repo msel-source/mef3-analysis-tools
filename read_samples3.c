@@ -5,7 +5,7 @@
  
  Program to read mef format file (v3.0) and output samples/timestamps to standard out.
  
- Copyright 2019, Mayo Foundation, Rochester MN. All rights reserved.
+ Copyright 2020, Mayo Foundation, Rochester MN. All rights reserved.
  
  This software is made freely available under the GNU public license: http://www.gnu.org/licenses/gpl-3.0.txt
  
@@ -18,6 +18,39 @@
 #include "meflib.h"
 
 MEF_GLOBALS	*MEF_globals;
+
+int check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 total_data_bytes)
+{
+    ui8 offset_into_data, remaining_buf_size;
+    si1 CRC_valid;
+    RED_BLOCK_HEADER* block_header;
+    
+    offset_into_data = block_hdr_ptr - total_data_ptr;
+    remaining_buf_size = total_data_bytes - offset_into_data;
+    
+    // check if remaining buffer at least contains the RED block header
+    if (remaining_buf_size < RED_BLOCK_HEADER_BYTES)
+        return 0;
+    
+    block_header = (RED_BLOCK_HEADER*) block_hdr_ptr;
+    
+    // check if entire block, based on size specified in header, can possibly fit in the remaining buffer
+    if (block_header->block_bytes > remaining_buf_size)
+        return 0;
+    
+    // check if size specified in header is absurdly large
+    if (block_header->block_bytes > RED_MAX_COMPRESSED_BYTES(max_samps, 1))
+        return 0;
+    
+    // at this point we know we have enough data to actually run the CRC calculation, so do it
+    CRC_valid = CRC_validate((ui1*) block_header + CRC_BYTES, block_header->block_bytes - CRC_BYTES, block_header->block_CRC);
+    
+    // return output of CRC heck
+    if (CRC_valid == MEF_TRUE)
+        return 1;
+    else
+        return 0;
+}
 
 int main (int argc, const char * argv[]) {
     si4 i, numBlocks, start_block;
@@ -80,10 +113,11 @@ int main (int argc, const char * argv[]) {
         temp_time = channel->segments[start_segment].time_series_data_fps->universal_header->start_time;
         remove_recording_time_offset(&temp_time);
         
-        fprintf(stdout, "\nNew Segment, segment %d: samples = %ld, blocks = %ld, time = %ld \n",
+        fprintf(stdout, "\nNew Segment, segment %d: samples = %ld, blocks = %ld, rate = %d time = %ld \n",
                 start_segment,
                 channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples,
                 numBlocks,
+                (int)(channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->sampling_frequency),
                 temp_time);
         
         start_block = 0;
@@ -98,6 +132,13 @@ int main (int argc, const char * argv[]) {
             rps->compressed_data = in_data;
             rps->decompressed_ptr = data;
             rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
+            if (!check_block_crc((ui1*)(rps->block_header), max_samps, in_data, inDataLength))
+            {
+                fprintf(stdout, "**CRC block failure!**\n");
+                start_block++;
+                continue;
+            }
+
             RED_decode(rps);
             
             fprintf(stdout, "\nNew Block, size = %d time = %lu\n\n",
