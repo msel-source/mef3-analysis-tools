@@ -1,5 +1,4 @@
 /*
- 
  *  check_mef3.c
  *
  
@@ -7,9 +6,19 @@
  
  This program is an update of the previous (MEF version 2) checker.
  
- Copyright 2019, Mayo Foundation, Rochester MN. All rights reserved.
+ Copyright 2020, Mayo Foundation, Rochester MN. All rights reserved.
  
  This software is made freely available under the GNU public license: http://www.gnu.org/licenses/gpl-3.0.txt
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
  
  */
 
@@ -132,7 +141,8 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
     calc_end_time = temp_time +
     (ui8)(0.5 + 1000000.0 * (sf8)channel->metadata.time_series_section_2->number_of_samples/channel->metadata.time_series_section_2->sampling_frequency);
     
-    if (temp_time2 < calc_end_time) {
+    // give this test a 1 second tolerence, to prevent minor innacuracies from being flagged
+    if (temp_time2 < (calc_end_time - 1000000)) {
         num_errors++;
         
         sprintf(message, "Channel latest_end_time %ld does not match sampling freqency and number of samples\n",
