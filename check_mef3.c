@@ -85,7 +85,8 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
         lfp = fopen(log_filename, "r");
         if (lfp != NULL)
             fprintf(stdout, "[%s] Appending to existing logfile %s\n", __FUNCTION__, log_filename);
-        fclose(lfp);
+        if (lfp != NULL)
+            fclose(lfp);
         lfp = fopen(log_filename, "a+");
         if (lfp == NULL) {
             fprintf(stdout, "[%s] Error opening %s for writing\n", __FUNCTION__, log_filename);
