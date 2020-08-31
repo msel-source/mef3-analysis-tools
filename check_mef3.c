@@ -327,8 +327,14 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
                 
                 
                 data_start = channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].file_offset;
+#ifndef _WIN32
                 fseek(fp = channel->segments[start_segment].time_series_data_fps->fp,
+                          channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].file_offset, SEEK_SET);
+#else
+                _fseeki64(fp = channel->segments[start_segment].time_series_data_fps->fp,
                       channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].file_offset, SEEK_SET);
+#endif
+                fprintf(stdout, "block: %d seek: %ld\n", i, channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].file_offset);
                 //fprintf(stdout, "data_end = %d\n", data_end);
                 n = fread(data, 1, data_end - channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].file_offset,
                           channel->segments[start_segment].time_series_data_fps->fp);
