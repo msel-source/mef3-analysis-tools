@@ -1,5 +1,4 @@
 /*
-
  *  read_samples3.c
  * 
  
@@ -8,6 +7,16 @@
  Copyright 2020, Mayo Foundation, Rochester MN. All rights reserved.
  
  This software is made freely available under the GNU public license: http://www.gnu.org/licenses/gpl-3.0.txt
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
  
  */
 
@@ -84,7 +93,7 @@ int main (int argc, const char * argv[]) {
     
     inDataLength = channel->metadata.time_series_section_2->maximum_block_bytes;
     in_data = malloc(inDataLength);
-    max_samps = channel->metadata.time_series_section_2->maximum_block_samples;
+    outDataLength = max_samps = channel->metadata.time_series_section_2->maximum_block_samples;
     data = calloc(outDataLength, sizeof(ui4));
     
     // create RED processing struct
@@ -126,7 +135,11 @@ int main (int argc, const char * argv[]) {
         while( start_block < numBlocks ) {
             
             fp = channel->segments[start_segment].time_series_data_fps->fp;
+#ifndef _WIN32
             fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_block].file_offset, SEEK_SET);
+#else
+            _fseeki64(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_block].file_offset, SEEK_SET);
+#endif
             n_read = fread(in_data, sizeof(si1), (size_t) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_block].block_bytes, fp);
             
             rps->compressed_data = in_data;
