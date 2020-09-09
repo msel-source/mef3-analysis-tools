@@ -113,6 +113,16 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
     //fprintf(stdout, " number of samples = %ld\n", channel->segments[1].metadata_fps->metadata.time_series_section_2->number_of_samples);
     //fprintf(stdout, " max block bytes = %ld\n", channel->segments[1].metadata_fps->metadata.time_series_section_2->maximum_block_bytes);
     
+    if (channel->metadata.time_series_section_2->block_interval == 0)
+    {
+        sprintf(message, "Channel block interval equals zero, this is an invalid value.\n");
+        fprintf(stdout, "%s", message);
+        if (logfile) fprintf(lfp, "%s", message);
+
+        // fix it, so we can continue the test
+        channel->metadata.time_series_section_2->block_interval = (1e6 / channel->metadata.time_series_section_2->sampling_frequency) * channel->metadata.time_series_section_2->maximum_block_samples;
+    }
+
     data = calloc(channel->metadata.time_series_section_2->sampling_frequency * (channel->metadata.time_series_section_2->block_interval / 1e6), blocks_per_read * 10);
     //fprintf(stdout, "allocating: %f\n", channel->metadata.time_series_section_2->sampling_frequency * blocks_per_read * 10);
     
@@ -304,6 +314,15 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
     while (start_segment < numSegments)
     {
         
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL) {
+            channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
+#ifndef _WIN32
+            channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
+#else
+            channel->segments[start_segment].time_series_data_fps->fd = _fileno(channel->segments[start_segment].time_series_data_fps->fp);
+#endif
+        }
+
         fprintf(stdout, "- Examining data of segment %s\n", channel->segments[start_segment].name);
         
         errors_before_this_segment = num_errors;
@@ -441,6 +460,9 @@ int validate_mef3(char *channelname, char *log_filename, char *password)
                 number_of_blocks, channel->segments[start_segment].name, num_errors - errors_before_this_segment);
         //fprintf(stdout, "%s", message);
         if (logfile) fprintf(lfp, "%s", message);
+
+        if (channel->segments[start_segment].time_series_data_fps->fp != NULL)
+            fclose(channel->segments[start_segment].time_series_data_fps->fp);
         
         start_segment++;
     }
@@ -531,7 +553,7 @@ int main (int argc, const char * argv[]) {
         validate_mef3(argv[i], "test.log", password);
         i++;
     }
-    
+
     printf("Done.\n");
     
     return (0);
