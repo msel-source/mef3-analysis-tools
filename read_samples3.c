@@ -116,6 +116,15 @@ int main (int argc, const char * argv[]) {
     
     // iterate over segments
     while (start_segment < numSegments) {
+
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL) {
+            channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
+#ifndef _WIN32
+            channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
+#else
+            channel->segments[start_segment].time_series_data_fps->fd = _fileno(channel->segments[start_segment].time_series_data_fps->fp);
+#endif
+        }
         
         numBlocks = channel->segments[start_segment].time_series_indices_fps->universal_header->number_of_entries;
         
@@ -163,6 +172,9 @@ int main (int argc, const char * argv[]) {
             
             start_block++;
         }
+
+        if (channel->segments[start_segment].time_series_data_fps->fp != NULL)
+            fclose(channel->segments[start_segment].time_series_data_fps->fp);
         
         start_segment++;
     }
