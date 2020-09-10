@@ -131,12 +131,21 @@ int main (int argc, const char * argv[]) {
         temp_time = channel->segments[start_segment].time_series_data_fps->universal_header->start_time;
         remove_recording_time_offset(&temp_time);
         
-        fprintf(stdout, "\nNew Segment, segment %d: samples = %ld, blocks = %ld, rate = %d time = %ld \n",
+#ifndef _WIN32
+        fprintf(stdout, "\nNew Segment, segment %d: samples = %ld, blocks = %ld, rate = %f time = %ld \n",
                 start_segment,
                 channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples,
                 numBlocks,
-                (int)(channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->sampling_frequency),
+                channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->sampling_frequency,
                 temp_time);
+#else
+        fprintf(stdout, "\nNew Segment, segment %d: samples = %lld, blocks = %ld, rate = %f time = %lld \n",
+            start_segment,
+            channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples,
+            numBlocks,
+            channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->sampling_frequency,
+            temp_time);
+#endif
         
         start_block = 0;
         
@@ -163,12 +172,23 @@ int main (int argc, const char * argv[]) {
 
             RED_decode(rps);
             
-            fprintf(stdout, "\nNew Block, size = %d time = %lu\n\n",
+            if (start_block == 0)
+            {
+#ifndef _WIN32
+                fprintf(stdout, "\nNew Block, size = %d time = %lu\n\n",
                     rps->block_header->number_of_samples,
                     rps->block_header->start_time);
-            
-            for (i=0;i<rps->block_header->number_of_samples;i++)
-                fprintf(stdout, "%d\n", data[i]);
+#else
+                fprintf(stdout, "\nNew Block, size = %d time = %lld\n\n",
+                    rps->block_header->number_of_samples,
+                    rps->block_header->start_time);
+#endif
+
+                Sleep(20000);
+
+                for (i = 0; i < rps->block_header->number_of_samples; i++)
+                    fprintf(stdout, "%d\n", data[i]);
+            }
             
             start_block++;
         }
