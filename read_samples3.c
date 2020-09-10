@@ -184,8 +184,6 @@ int main (int argc, const char * argv[]) {
                     rps->block_header->start_time);
 #endif
 
-                Sleep(20000);
-
                 for (i = 0; i < rps->block_header->number_of_samples; i++)
                     fprintf(stdout, "%d\n", data[i]);
             }
